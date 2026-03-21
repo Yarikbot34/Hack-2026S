@@ -49,13 +49,30 @@ def fetch_news_sources(): # Запускается по расписанию. З
 def process_article_nlp(article_id): #  Запускается для каждой новой статьи (Считает вектор (для поиска), Ищет сущности (кто упомянут?), Пишет в Neo4j (строит граф))
     try:
         article = Article.objects.get(id=article_id)
+
         text = f"{article.title} {article.content}"
         article.embedding = generate_embedding(text)
+
+        entities = extract_entities(text)
+
         article.is_processed = True
         article.save()
-        update_neo4j_graph(article.id, article.title)
+
+        neo4j_conn.create_article_node(article.id, article.title, article.url)
+        neo4j_conn.create_entities(article.id, entities)
+
+        ProcessingLog.objects.create(
+            task_name='process_article_nlp',
+            status='SUCCESS',
+            message=f'Article {article.id} processed'
+        )
+
     except Exception as e:
-        ProcessingLog.objects.create(task_name='process_article_nlp', status='FAILED', message=str(e))
+        ProcessingLog.objects.create(
+            task_name='process_article_nlp',
+            status='FAILED',
+            message=str(e)
+        )
 
 def update_neo4j_graph(article_id, title):
     query = """
