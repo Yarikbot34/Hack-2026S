@@ -1,0 +1,16 @@
+from rest_framework import serializers
+from .models import Article, NewsSource
+
+# База данных хранит объекты Python, а браузер понимает только JSON (текст).
+# Превращает объект в JSON и обратно.
+
+class NewsSourceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = NewsSource
+        fields = '__all__'
+
+class ArticleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Article
+        fields = ['id', 'title', 'content', 'url', 'published_at', 'source', 'is_processed']
+
